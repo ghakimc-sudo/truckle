@@ -1599,6 +1599,29 @@ html:not([data-theme="light"]) .lvp.t3{color:#F4B000}html:not([data-theme="light
 .hgreet{font-size:17px;font-weight:700;color:var(--ink-2);margin-right:6px}
 .hchip{display:inline-flex;gap:7px;align-items:center;padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--panel-line);font-size:14.5px;font-weight:800;color:var(--ink)}
 .hchip svg{width:16px;height:16px;color:#F4B000}
+/* v34 compact mobile chrome */
+.rwbar{padding:9px 14px;gap:10px;border-radius:14px}.rw-i{width:32px;height:32px;border-radius:10px}.rw-i svg{width:18px;height:18px}.rwbar b{font-size:14.5px}.rwbar small{font-size:12.5px}
+@media (max-width:900px){
+ .mtop{position:sticky!important;top:0!important;z-index:30!important;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px!important;background:#07121C!important;backdrop-filter:none!important;box-shadow:0 1px 0 rgba(255,255,255,.06)}
+ html[data-theme="light"] .mtop{background:#0B1C2B!important}
+ .bottomnav{padding:5px 2px calc(4px + env(safe-area-inset-bottom,0px))!important;align-items:center!important}
+ .bottomnav button{font-size:10.5px!important;gap:2px!important;padding:3px 0!important}
+ .bottomnav button svg{width:21px!important;height:21px!important}
+ .bottomnav .fab .fb{width:40px!important;height:40px!important;border-radius:13px!important}
+ .bottomnav .fab .fb svg{width:22px!important;height:22px!important}
+ .bottomnav .badge{font-size:9.5px!important;padding:0 4px!important;right:calc(50% - 18px)!important}
+ .page{padding-bottom:88px!important}
+ .toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))!important}
+ .lvc{padding:10px 12px;gap:10px;border-radius:16px;flex-wrap:nowrap!important}
+ .lvb.lg{width:38px;height:42px}.lvb.lg b{font-size:15px}
+ .lvc-t{gap:6px}.lvc-t span{font-size:10.5px}.lvc-t b{font-size:16px}
+ .lvbar{height:7px;margin:5px 0 4px}
+ .lvc-s{font-size:12px;line-height:1.35}
+ .lvc-b{width:auto!important;padding-left:0!important;flex-direction:column;align-items:flex-end}
+ .lvc-b .md{display:none}.lvc-b em{font-size:12px;margin-left:0;white-space:nowrap}
+ .rwbar{padding:8px 12px}.rwbar small{display:none}.rwbar b{font-size:13.5px}.rw-i{width:28px;height:28px}.rw-go{font-size:12.5px}
+ .phead div:has(>.sub .hgreet)>h1{font-size:28px!important}.hgreet{font-size:15px}.hchip{font-size:13px;padding:4px 10px}
+}
 </style>
 
 <div class="app">
@@ -1811,7 +1834,7 @@ function jobHours(j){const acc=accepted(j).filter(([,a])=>a.out);return acc.leng
 const toInvoice=()=>jobsArr().filter(j=>!j.manual&&jobState(j)==='done'&&!cinvOfJob(j.id)).reverse();
 function buildCinv(j){const o=company(jobCo(j)||'org'),h=jobHours(j),n=accepted(j).length||+j.crewNeeded||2;
   const tolls=r2(accepted(j).reduce((s,[,a])=>s+(+a.tolls||0),0));
-  const lines=[{desc:`Removal · ${n} movers${j.truck?' + '+j.truck:''}${j.from&&j.to?' · '+j.from+' to '+j.to:''}`,qty:h,unit:'h',rate:+j.custRate||0}];
+  const lines=[{desc:`Removal · ${n} removalists${j.truck?' + '+j.truck:''}${j.from&&j.to?' · '+j.from+' to '+j.to:''}`,qty:h,unit:'h',rate:+j.custRate||0}];
   if(tolls)lines.push({desc:'Tolls & parking',qty:1,unit:'flat',rate:tolls});
   return {jobId:j.id,companyId:o.id,customer:j.customer||'',phone:j.customerPhone||'',email:'',address:j.to||'',number:'C-'+(o.nextCust||1001),issuedAt:todayStr(),dueAt:todayStr(),
     lines,disc:0,discType:'$',gstIncl:o.gst!==false,notes:`Thanks for moving with ${o.name}!`}}
@@ -2241,7 +2264,7 @@ function leadFeed(js){const co=UI.coId,now=Date.now();
   const card=x=>{if(x.k==='q'){const q=x.q,mine=q.quotes?.[co],gr=guideRange(q.size,q.extras),n=Object.values(q.quotes||{}).filter(v=>v.status==='sent').length;
       return `<button class="at lead" data-act="qOpen" data-id="${q.id}"><div class="at-top"><div><span class="ltag q">Quote request</span>${fresh(x)&&!mine?'<span class="at-new">New</span>':''}<b class="at-t" style="display:block;margin-top:6px">${esc(qTitle(q))}</b></div><span class="at-p num">${q.budget?money0(q.budget)+'<small> budget</small>':gr?money0(gr[0])+'<small>+</small>':''}</span></div>
        <div class="at-m">${I.pin}<span>${esc([q.from,q.to].filter(Boolean).join(' → '))}</span></div>
-       <div class="at-m">${I.cal}<span>${dayLabel(q.date)} · ${esc(q.start)} · ~${q.estHours} h · ${q.crewNeeded} movers</span></div>
+       <div class="at-m">${I.cal}<span>${dayLabel(q.date)} · ${esc(q.start)} · ~${q.estHours} h · ${q.crewNeeded} removalists</span></div>
        <div class="at-f">${mine?.status==='sent'?`<span class="at-s ap">You quoted ${money0(mine.total)}</span>`:`<span class="at-s open">Closes in ${esc(qLeft(q))}</span>`}<span>· ${n} quote${n===1?'':'s'} so far</span><span class="lgo">${mine?'View':'Send quote'} ›</span></div></button>`}
     const j=x.j;return `<button class="at lead" data-job="${j.id}"><div class="at-top"><div><span class="ltag b">Booking request</span>${fresh(x)?'<span class="at-new">New</span>':''}<b class="at-t" style="display:block;margin-top:6px">${esc(j.customer)} · ${esc(moveTags(j).join(', ')||'Move')}</b></div></div>
        <div class="at-m">${I.pin}<span>${esc([j.from,j.to].filter(Boolean).join(' → '))}</span></div>
@@ -2251,7 +2274,7 @@ function leadFeed(js){const co=UI.coId,now=Date.now();
    ${all.length?`<div class="feed-l">${all.map(card).join('')}</div>`:`<div class="feed-e"><span class="lic go">${I.brief}</span><div><b>No new requests right now</b><div class="small muted">When a customer near you asks for quotes or books you, it lands here first.</div></div></div>`}</section>`}
 function feedItems(co){const t=todayStr(),js=jobsArr(),out=[],soon=addDays(t,1),ago=d=>Date.now()-new Date(d||0).getTime();
   qFor(co).filter(q=>qOpen(q)&&!['passed','withdrawn'].includes(q.quotes?.[co]?.status)).forEach(q=>{const mine=q.quotes?.[co],gr=guideRange(q.size,q.extras);
-    out.push({k:'req',tag:'Quote request',cls:'q',act:!mine,title:qTitle(q),route:[q.from,q.to],when:`${dayLabel(q.date)} · ${q.start} · ~${q.estHours} h · ${q.crewNeeded} movers`,price:q.budget?money0(q.budget)+'<small> budget</small>':gr?money0(gr[0])+'<small>+</small>':'',
+    out.push({k:'req',tag:'Quote request',cls:'q',act:!mine,title:qTitle(q),route:[q.from,q.to],when:`${dayLabel(q.date)} · ${q.start} · ~${q.estHours} h · ${q.crewNeeded} removalists`,price:q.budget?money0(q.budget)+'<small> budget</small>':gr?money0(gr[0])+'<small>+</small>':'',
       status:mine?`<span class="at-s ap">You quoted ${money0(mine.total)}</span>`:`<span class="at-s open">Closes in ${esc(qLeft(q))}</span>`,go:mine?'View':'Send quote',at:`data-act="qOpen" data-id="${q.id}"`,time:q.createdAt,isNew:!mine&&ago(q.createdAt)<36e5})});
   js.filter(j=>j.requested).forEach(j=>out.push({k:'req',tag:'Booking request',cls:'b',act:true,title:`${j.customer} · ${moveTags(j).join(', ')||'Move'}`,route:[j.from,j.to],when:`${dayLabel(j.date)} · ${j.start}${j.estHours?' · ~'+j.estHours+' h':''}`,status:'<span class="at-s open">Wants to book you</span>',go:'Confirm',at:`data-job="${j.id}"`,time:j.requestedAt,isNew:ago(j.requestedAt)<36e5}));
   js.filter(j=>j.quote&&!j.cancelled&&j.date>=t&&qLastFromCust(j)).forEach(j=>{const m=qLastFromCust(j);out.push({k:'req',tag:'Customer question',cls:'b',act:true,title:`${firstName(j.customer)||'Customer'} asked about ${j.ref}`,note:m.text,when:`${dayLabel(j.date)} · ${j.start}`,status:'<span class="at-s open">Waiting for your reply</span>',go:'Reply',at:`data-job="${j.id}"`,time:m.t})});
@@ -2356,7 +2379,7 @@ function authStep(step,via){const box=$('#auth');if(!box)return;box.hidden=false
     <label class="f full" style="margin-bottom:14px"><span>Your first name</span><input id="au_nm" autocomplete="given-name" value="${esc(AUTH.name||'')}" placeholder="e.g. George"></label>
     <div class="au-roles"><button data-act="authRole" data-v="customer"><span class="rc">${I.home}</span><div><b>I'm moving</b><small>Get quotes, book a removalist, track and pay</small></div><i>›</i></button>
     <button data-act="authRole" data-v="company"><span class="rc">${I.truck}</span><div><b>I run a removal company</b><small>Quotes, jobs, crew and invoices</small></div><i>›</i></button>
-    <button data-act="authRole" data-v="crew"><span class="rc">${I.team}</span><div><b>I work as a mover</b><small>Find shifts, clock hours, get paid</small></div><i>›</i></button></div>`}
+    <button data-act="authRole" data-v="crew"><span class="rc">${I.team}</span><div><b>I work as a removalist</b><small>Find shifts, clock hours, get paid</small></div><i>›</i></button></div>`}
   box.innerHTML=`<div class="au-in">${h}</div>`;setTimeout(()=>box.querySelector('input')?.focus(),60);
 }
 function hello(){const h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening'}
@@ -2387,7 +2410,7 @@ function viewBook(){
    ${Q||c?'':`<section class="card"><div class="card-h"><h2>Moving company</h2></div><label class="f"><span>Book with</span><select id="bk_co">${coArr().map(o=>`<option value="${o.id}" ${bk.co===o.id?'selected':''}>${esc(o.name)}</option>`).join('')}</select></label></section>`}
    <section class="card"><div class="card-h"><h2>What are you moving?</h2></div><div class="chips">${Object.keys(SIZES).map(s=>`<button data-act="bkSize" data-v="${s}" aria-pressed="${bk.size===s}">${s}</button>`).join('')}</div>
     <div class="flbl" style="margin-top:12px">Anything extra?</div><div class="chips">${Object.keys(EXTRAS).map(s=>`<button data-act="bkExtra" data-v="${s}" aria-pressed="${(bk.extras||[]).includes(s)}">${s}</button>`).join('')}</div>
-    ${est?`<div class="small muted" style="margin-top:10px">Usually about ${est} h with ${SIZES[bk.size][1]} movers.</div>`:''}
+    ${est?`<div class="small muted" style="margin-top:10px">Usually about ${est} h with ${SIZES[bk.size][1]} removalists.</div>`:''}
     <label class="f" style="margin-top:12px"><span>Big items (optional)</span><textarea id="bk_items" rows="2" placeholder="e.g. Fridge, 2 queen beds, piano">${esc(bk.items)}</textarea></label></section>
    ${budget}<section class="card"><div class="card-h"><h2>When and where</h2></div><div class="form">${f('bk_date','Date',bk.date,'date')}${f('bk_start','Preferred start',bk.start,'time')}${f('bk_from','Moving from (suburb)',bk.from,'text','','e.g. Bondi')}${f('bk_to','Moving to (suburb)',bk.to,'text','','e.g. Manly')}</div></section>
    <section class="card"><div class="card-h"><h2>Your details</h2></div><div class="form">${f('bk_name','Name',bk.name,'text','','e.g. Sam Lee')}${f('bk_phone','Mobile',bk.phone,'tel')}${f('bk_email','Email (for your invoice)',bk.email,'email','full')}
@@ -2487,7 +2510,7 @@ function coProfView(d){const x=coProfile(d.id),o=x.o,home=cfHome(),dist=home?km(
      <div class="cc-h" style="margin-top:6px"><span class="cp-mk lg">${esc(initials(o.name))}</span><div class="grow"><div class="cm-date" style="font-size:26px;margin:0">${esc(o.name)}</div><div class="cm-time">${esc(x.s.home||'Sydney')} · covers ${x.s.radius} km${dist!=null?' · '+dist+' km from you':''}</div></div></div>
      <div class="rt-line big" style="margin-top:10px">${x.rt.n?`${starsHtml(x.rt.avg)}<b>${x.rt.avg.toFixed(1)}</b><span>from ${x.rt.n} verified move${x.rt.n>1?'s':''}</span>`:'<span>No reviews yet</span>'}</div><div class="badges" style="margin-top:12px">${o.abn?'<span class="tag hired">ABN verified</span>':''}${o.gst!==false?'<span class="tag">GST registered</span>':''}${x.s.on!==false?'<span class="tag hired">Taking quotes</span>':'<span class="tag no">Not taking quotes</span>'}</div></section>
    <div class="mestats" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><b class="num">${x.st.done}</b><span>Moves done</span></div><div><b class="num">${x.st.onTime!=null?x.st.onTime+'%':'–'}</b><span>Crew on time</span></div><div><b class="num">${x.st.reply!=null?(x.st.reply<60?x.st.reply+' min':Math.round(x.st.reply/60)+' h'):'–'}</b><span>Quote reply</span></div></div>
-   <div class="mestats" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><b class="num">${x.crew}</b><span>Movers</span></div><div><b class="num">${x.quoted}</b><span>Quotes sent</span></div><div><b class="num">${x.st.won}</b><span>Quotes won</span></div></div>
+   <div class="mestats" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><b class="num">${x.crew}</b><span>Removalists</span></div><div><b class="num">${x.quoted}</b><span>Quotes sent</span></div><div><b class="num">${x.st.won}</b><span>Quotes won</span></div></div>
    <section class="card"><div class="card-h"><h2>Reviews</h2>${x.rt.n?`<span class="rt-line">${starsHtml(x.rt.avg,'sm')}<b>${x.rt.avg.toFixed(1)}</b><span>· ${x.rt.n}</span></span>`:''}</div>
      ${x.rt.n?`${revBars(d.id)}<div class="revs">${revsOf(d.id).slice(0,d.allRev?99:3).map(r=>reviewHtml(r)).join('')}</div>${x.rt.n>3&&!d.allRev?`<button class="btn sm" data-act="revAll">See all ${x.rt.n} reviews</button>`:''}`:'<div class="empty">No reviews yet. Only customers who finished a move with them can review.</div>'}</section>
    <section class="card"><div class="card-h"><h2>Prices</h2></div><div class="dlist">
@@ -2514,7 +2537,7 @@ function viewCQuotes(){
   else{b+=`<div class="sech"><h2>${qs.length} quote${qs.length>1?'s':''}</h2><span class="small faint">cheapest first</span></div><div class="qlist">`;
     qs.forEach(([co,x],i)=>{const o=company(co),st=coStats(co),over=q.budget?x.total-q.budget:0,won=q.acceptedCo===co;
       b+=`<section class="qcard ${won?'won':''}"><div class="qc-h"><span class="cp-mk">${esc(initials(o.name))}</span><div class="grow"><b>${esc(o.name)}</b><div class="rt-line">${rating(co).n?`${starsHtml(rating(co).avg,'sm')}<b>${rating(co).avg.toFixed(1)}</b><span>(${rating(co).n})</span>`:'<span>No reviews yet</span>'}</div><div class="badges" style="margin-top:4px">${st.done?`<span class="tag">${st.done} jobs on Truckle</span>`:'<span class="tag new">New on Truckle</span>'}${st.onTime!=null?`<span class="tag">${st.onTime}% on time</span>`:''}${x.dt!=null?`<span class="tag">replied in ${x.dt<60?x.dt+' min':Math.round(x.dt/60)+' h'}</span>`:''}${i===0&&qs.length>1?'<span class="tag hired">Lowest price</span>':''}</div></div></div>
-        <div class="qc-price"><b class="num">${money0(x.total)}</b><span>${x.fixed?'fixed price':`${money(x.rate)}/h × about ${x.hours} h`} · ${x.movers} movers · arrives ${esc(x.arrival)}</span></div>
+        <div class="qc-price"><b class="num">${money0(x.total)}</b><span>${x.fixed?'fixed price':`${money(x.rate)}/h × about ${x.hours} h`} · ${x.movers} removalists · arrives ${esc(x.arrival)}</span></div>
         ${q.budget?`<div class="small" style="color:${over>0?'var(--warn)':'var(--ok)'};font-weight:700">${over>0?money0(over)+' over your budget':over<0?money0(-over)+' under your budget':'Exactly your budget'}</div>`:''}
         ${x.msg?`<div class="quote">“${esc(x.msg)}”</div>`:''}
         ${q.status==='booked'?(won?`<div class="hired-note">✓ You booked ${esc(o.name)}</div><button class="btn" data-act="custGoMove" data-co="${co}">See my move</button>`:''):`<button class="btn mega ok" data-act="qAccept" data-co="${co}">Accept · ${money0(x.total)}</button>`}</section>`});
@@ -2893,7 +2916,7 @@ function drawDrawer(){
 }
 function quoteTot(j){return j.fixedPrice?+j.fixedPrice:(+j.custRate||0)*(+j.estHours||0)}
 function quoteText(j){const o=company(jobCo(j)||'org'),tot=quoteTot(j);
-  return `Hi ${firstName(j.customer)||'there'}, here's your quote from ${o.name}.\n\n${[j.size?j.size+' move':'Move',j.from&&j.to?j.from+' to '+j.to:''].filter(Boolean).join(', ')}\n${fd(j.date)} at ${j.start}\n${+j.crewNeeded||2} movers${j.truck?' + '+j.truck:''}${(j.extras||[]).length?'\nIncludes: '+(j.extras||[]).join(', '):''}\n\n${j.fixedPrice?'Fixed price '+money0(tot):money(j.custRate)+'/h, about '+j.estHours+' h, estimated '+money0(tot)+'.\nFinal price is based on actual time.'}\n\nYou can accept or decline it in your Truckle app, or just reply YES here to lock it in.`}
+  return `Hi ${firstName(j.customer)||'there'}, here's your quote from ${o.name}.\n\n${[j.size?j.size+' move':'Move',j.from&&j.to?j.from+' to '+j.to:''].filter(Boolean).join(', ')}\n${fd(j.date)} at ${j.start}\n${+j.crewNeeded||2} removalists${j.truck?' + '+j.truck:''}${(j.extras||[]).length?'\nIncludes: '+(j.extras||[]).join(', '):''}\n\n${j.fixedPrice?'Fixed price '+money0(tot):money(j.custRate)+'/h, about '+j.estHours+' h, estimated '+money0(tot)+'.\nFinal price is based on actual time.'}\n\nYou can accept or decline it in your Truckle app, or just reply YES here to lock it in.`}
 const qStale=j=>j.quote&&(j.quote.total!==quoteTot(j)||j.quote.date!==j.date||j.quote.start!==j.start);
 function qStatus(j){const q=j.quote;if(!q)return `<span class="pill p-grey">Not sent yet</span>`;
   if(q.status==='accepted')return `<span class="pill p-green">Accepted ${fd(q.decidedAt.slice(0,10))}</span>`;
@@ -2918,7 +2941,7 @@ function quoteBox(j){if(!j.custRate&&!j.fixedPrice)return `<section class="card"
    ${q?`<div class="qsend"><div class="eyebrow">Messages with ${esc(firstName(j.customer)||'the customer')}</div>${qThread(j,'company')}</div>`:''}</section>`}
 function acceptedBanner(j){const q=j.quote;if(!q||q.status!=='accepted')return '';const need=(+j.crewNeeded||1)-accepted(j).length;
   return `<section class="qwin"><div class="qw-top"><span class="qw-ic">✓</span><div class="grow"><b>${esc(firstName(j.customer)||'Customer')} accepted your quote</b><div class="small">${money0(q.total)} · ${fd(q.decidedAt.slice(0,10))}</div></div></div>
-   ${need>0?`<div class="qw-next"><b>Next: get ${need} ${need>1?'movers':'mover'} for ${dayLabel(j.date)}</b><div class="small">${isOpen(j)?'This job is on the Truckle job board. Workers nearby can apply.':'Pick from your crew, or put it on the job board so workers nearby can apply.'}</div>
+   ${need>0?`<div class="qw-next"><b>Next: get ${need} ${need>1?'removalists':'removalist'} for ${dayLabel(j.date)}</b><div class="small">${isOpen(j)?'This job is on the Truckle job board. Workers nearby can apply.':'Pick from your crew, or put it on the job board so workers nearby can apply.'}</div>
      <div class="row" style="margin-top:10px">${isOpen(j)?`<span class="pill p-amber">On the job board</span>`:`<button class="btn go" data-act="togPost" data-id="${j.id}">Post on job board</button>`}<button class="btn" data-act="qAllocate">Allocate my crew ↓</button></div></div>`:`<div class="qw-next"><b>Crew is sorted.</b> All ${+j.crewNeeded||1} spots filled.</div>`}</section>`}
 function qThread(j,side){const ms=(j.quote&&j.quote.msgs)||[],o=company(jobCo(j)||'org');
   const list=ms.length?ms.map(m=>{const mine=m.from===side;return `<div class="msg ${mine?'mine':''}"><div class="bub">${esc(m.text)}</div><span class="when">${mine?'You':esc(m.from==='company'?o.name:(firstName(j.customer)||'Customer'))} · ${msgTime(m.t)}</span></div>`}).join(''):`<div class="empty" style="padding:14px">${side==='customer'?`Ask ${esc(o.name)} anything about this quote. They reply here.`:'No questions yet. Anything the customer asks shows up here.'}</div>`;
@@ -2931,7 +2954,7 @@ function cquoteView(d){const j=S.jobs[d.id];if(!j||!j.quote)return null;const q=
    <section class="qhero"><div class="row spread"><span class="eyebrow">Your quote ${esc(j.ref||'')}</span>${st}</div><div class="qh-price num">${money0(q.total)}</div><div class="small muted">${q.fixed?'Fixed price':`${money(q.rate)}/h · about ${q.hours} h`}</div></section>
    <section class="card"><div class="card-h"><h3>From</h3></div><div class="row" style="align-items:center;gap:12px"><span class="cp-mk">${esc(initials(o.name))}</span><div class="grow"><b>${esc(o.name)}</b><div class="small muted">${r.n?starsHtml(r.avg,'sm')+' '+r.avg+' · '+r.n+' review'+(r.n>1?'s':''):'New on Truckle'}</div></div></div>
      <div class="row" style="margin-top:12px">${o.phone?`<a class="btn sm" href="tel:${esc(o.phone.replace(/\s/g,''))}">Call</a><a class="btn sm wa" href="https://wa.me/${waNumber(o.phone)}" target="_blank" rel="noopener">WhatsApp</a>`:''}${o.email?`<a class="btn sm" href="mailto:${esc(o.email)}">Email</a>`:''}</div></section>
-   <section class="card"><div class="card-h"><h3>Your move</h3></div><dl class="kv"><dt>When</dt><dd>${fd(j.date)} · ${esc(j.start)}</dd>${j.from?`<dt>Pickup</dt><dd>${esc(j.from)}</dd>`:''}${j.to?`<dt>Drop-off</dt><dd>${esc(j.to)}</dd>`:''}${moveTags(j).length?`<dt>Move</dt><dd>${esc(moveTags(j).join(' · '))}</dd>`:''}${j.items?`<dt>Big items</dt><dd>${esc(j.items)}</dd>`:''}<dt>Team</dt><dd>${+j.crewNeeded||2} movers${j.truck?' · '+esc(j.truck):''}</dd></dl></section>
+   <section class="card"><div class="card-h"><h3>Your move</h3></div><dl class="kv"><dt>When</dt><dd>${fd(j.date)} · ${esc(j.start)}</dd>${j.from?`<dt>Pickup</dt><dd>${esc(j.from)}</dd>`:''}${j.to?`<dt>Drop-off</dt><dd>${esc(j.to)}</dd>`:''}${moveTags(j).length?`<dt>Move</dt><dd>${esc(moveTags(j).join(' · '))}</dd>`:''}${j.items?`<dt>Big items</dt><dd>${esc(j.items)}</dd>`:''}<dt>Team</dt><dd>${+j.crewNeeded||2} removalists${j.truck?' · '+esc(j.truck):''}</dd></dl></section>
    <section class="card"><div class="card-h"><h3>Price</h3></div><dl class="kv">${est}<dt>Payment</dt><dd>Nothing now. You get the invoice after the move and pay in the app.</dd></dl></section>
    <section class="card"><div class="card-h"><h3>Questions for ${esc(o.name)}</h3></div>${qThread(j,'customer')}</section>
    ${q.status==='sent'?`<section class="card qdecide"><button class="btn mega ok" data-act="quoteAccept" data-id="${j.id}">Accept ${money0(q.total)}</button>
@@ -2941,7 +2964,7 @@ function custQuoteCard(j){const q=j.quote;if(!q||q.status!=='sent')return '';con
   return `<section class="act sendx cquote" id="cq_${j.id}"><div class="act-top"><span class="lbl">Quote from ${esc(o.name)}</span></div>
    <div class="when num">${money0(q.total)}</div>
    <div class="act-meta">${q.fixed?'Fixed price':`${money(q.rate)}/h · about ${q.hours} h · you pay for the actual time`}</div>
-   <dl class="kv" style="margin-top:10px"><dt>When</dt><dd>${fd(j.date)} · ${esc(j.start)}</dd>${j.from||j.to?`<dt>Route</dt><dd>${esc([j.from,j.to].filter(Boolean).join(' → '))}</dd>`:''}<dt>Team</dt><dd>${+j.crewNeeded||2} movers${j.truck?' · '+esc(j.truck):''}</dd>${(j.extras||[]).length?`<dt>Includes</dt><dd>${esc(j.extras.join(', '))}</dd>`:''}</dl>
+   <dl class="kv" style="margin-top:10px"><dt>When</dt><dd>${fd(j.date)} · ${esc(j.start)}</dd>${j.from||j.to?`<dt>Route</dt><dd>${esc([j.from,j.to].filter(Boolean).join(' → '))}</dd>`:''}<dt>Team</dt><dd>${+j.crewNeeded||2} removalists${j.truck?' · '+esc(j.truck):''}</dd>${(j.extras||[]).length?`<dt>Includes</dt><dd>${esc(j.extras.join(', '))}</dd>`:''}</dl>
    ${UI.qdec===j.id?`<label class="f full" style="margin-top:12px"><span>Tell ${esc(o.name)} why (optional)</span><textarea id="qd_reason" rows="2" placeholder="e.g. Found a cheaper price, date changed"></textarea></label><div class="row" style="margin-top:10px"><button class="btn danger" data-act="quoteDecline" data-id="${j.id}">Decline quote</button><button class="btn ghost" data-act="quoteDecCancel">Back</button></div>`
    :`<div class="row" style="margin-top:14px"><button class="btn mega ok" data-act="quoteAccept" data-id="${j.id}">Accept ${money0(q.total)}</button></div><button class="btn ghost" style="margin-top:8px" data-act="quoteDecAsk" data-id="${j.id}">Decline</button>`}
    <button class="btn qfull" data-act="cquoteOpen" data-id="${j.id}">See full quote & ask a question${((q.msgs||[]).slice(-1)[0]||{}).from==='company'?' <span class="ubadge">new reply</span>':''}</button>
@@ -3060,14 +3083,14 @@ function qreqView(d){
     <div class="seg" role="group" style="margin-bottom:12px"><button data-act="qType" data-v="h" aria-pressed="${!x.fixed}">Hourly</button><button data-act="qType" data-v="f" aria-pressed="${!!x.fixed}">Fixed price</button></div>
     <div class="form"><label class="f"><span>${x.fixed?'Total price ($)':'Price per hour ($)'}</span><input id="qf_rate" type="number" step="any" min="0" inputmode="decimal" value="${esc(x.rate)}" placeholder="${x.fixed?'e.g. 950':'e.g. 160'}"></label>
      ${x.fixed?'':`<label class="f"><span>Estimated hours</span><input id="qf_hours" type="number" step="0.5" min="0" value="${esc(x.hours)}"></label>`}
-     <label class="f"><span>Movers</span><input id="qf_movers" type="number" min="1" value="${esc(x.movers)}"></label><label class="f"><span>Arrival window</span><input id="qf_arr" value="${esc(x.arrival)}" placeholder="e.g. 8:00 to 9:00"></label>
+     <label class="f"><span>Removalists</span><input id="qf_movers" type="number" min="1" value="${esc(x.movers)}"></label><label class="f"><span>Arrival window</span><input id="qf_arr" value="${esc(x.arrival)}" placeholder="e.g. 8:00 to 9:00"></label>
      <label class="f full"><span>Message to the customer</span><textarea id="qf_msg" rows="2" placeholder="e.g. We move pianos every week and bring a piano board. Price includes blankets and wrapping.">${esc(x.msg)}</textarea></label></div>
     <div class="est" style="margin-top:12px"><div><span>Customer sees</span><div><b class="num" id="qfTot">${money0(tot)}</b></div></div><span style="text-align:right" id="qfCmp">${q.budget?(over>0?`${money0(over)} over their budget.<br>Say why in your message.`:'Within their budget'):'No budget set'}</span></div>
     <div class="row sticky"><button class="btn danger" data-act="qPass">Pass</button><button class="btn go xl" style="flex:1" data-act="qSend">${mine?'Update quote':'Send quote'}</button></div></section>`
-   :(mine&&mine.status==='sent'&&!state?`<section class="card"><div class="card-h"><h2>Your quote</h2><span class="pill p-blue">Sent</span></div><div class="qc-price"><b class="num">${money0(mine.total)}</b><span>${mine.fixed?'fixed price':`${money(mine.rate)}/h × ${mine.hours} h`} · ${mine.movers} movers · ${esc(mine.arrival)}</span></div>${mine.msg?`<div class="quote">“${esc(mine.msg)}”</div>`:''}
+   :(mine&&mine.status==='sent'&&!state?`<section class="card"><div class="card-h"><h2>Your quote</h2><span class="pill p-blue">Sent</span></div><div class="qc-price"><b class="num">${money0(mine.total)}</b><span>${mine.fixed?'fixed price':`${money(mine.rate)}/h × ${mine.hours} h`} · ${mine.movers} removalists · ${esc(mine.arrival)}</span></div>${mine.msg?`<div class="quote">“${esc(mine.msg)}”</div>`:''}
      <div class="row" style="margin-top:10px">${open?'<button class="btn" data-act="qEdit">Change quote</button><button class="btn danger" data-act="qWithdraw">Withdraw</button>':''}</div></section>`:'');
   return {title:'Quote request',body:`${state}
-   <section class="cmove"><div class="cm-top"><span class="lbl">${open?'Quotes close in '+esc(qLeft(q)):'Closed'}</span><span class="small" style="opacity:.7">${inv} invited · ${others+(mine?.status==='sent'?1:0)} quoted</span></div><div class="cm-date">${esc(qTitle(q))}</div><div class="cm-time">${fd(q.date)} · prefers ${q.start} · about ${q.estHours} h · ${q.crewNeeded} movers</div>
+   <section class="cmove"><div class="cm-top"><span class="lbl">${open?'Quotes close in '+esc(qLeft(q)):'Closed'}</span><span class="small" style="opacity:.7">${inv} invited · ${others+(mine?.status==='sent'?1:0)} quoted</span></div><div class="cm-date">${esc(qTitle(q))}</div><div class="cm-time">${fd(q.date)} · prefers ${q.start} · about ${q.estHours} h · ${q.crewNeeded} removalists</div>
      <div class="qbud"><div><span>Customer budget</span><b class="num">${q.budget?money0(q.budget):'Not set'}</b></div><div><span>Usual price</span><b class="num">${gr?money0(gr[0])+'–'+money0(gr[1]):'–'}</b></div></div></section>
    ${routeStrip(q)}
    <section class="card"><div class="card-h"><h2>The move</h2></div><dl class="kv"><dt>Customer</dt><dd>${esc(firstName(q.customer))} · contact details shared if you win</dd>${moveTags(q).length?`<dt>Move</dt><dd>${esc(moveTags(q).join(' · '))}</dd>`:''}${q.items?`<dt>Big items</dt><dd>${esc(q.items)}</dd>`:''}${q.notes?`<dt>Notes</dt><dd>${esc(q.notes)}</dd>`:''}</dl></section>
@@ -3100,7 +3123,7 @@ function postView(d){
   const Q=['What\'s the job?','When is it?','Crew and pay','Who can take it?'];
   let b='';
   if(st===1)b=`<div><div class="flbl">Size of the move</div><div class="chips">${Object.keys(SIZES).map(s=>`<button data-act="wSize" data-v="${s}" aria-pressed="${j.size===s}">${s}</button>`).join('')}</div></div>
-   <div><div class="flbl">Anything extra?</div><div class="chips">${Object.keys(EXTRAS).map(s=>`<button data-act="wExtra" data-v="${s}" aria-pressed="${(j.extras||[]).includes(s)}">${s}</button>`).join('')}</div>${j.size?`<div class="small faint" style="margin-top:6px">Suggested: ${j.crewNeeded} movers, about ${j.estHours} h. You can change it.</div>`:''}</div>
+   <div><div class="flbl">Anything extra?</div><div class="chips">${Object.keys(EXTRAS).map(s=>`<button data-act="wExtra" data-v="${s}" aria-pressed="${(j.extras||[]).includes(s)}">${s}</button>`).join('')}</div>${j.size?`<div class="small faint" style="margin-top:6px">Suggested: ${j.crewNeeded} removalists, about ${j.estHours} h. You can change it.</div>`:''}</div>
    <div class="form">${f('w_title','Job title',j.title,'text','full','e.g. 3-bedroom house move')}${f('w_customer','Customer (only you see this)',j.customer,'text','','e.g. Smith family')}${f('w_phone','Customer phone',j.customerPhone,'tel')}${f('w_from','Pickup suburb',j.from,'text','','e.g. Bondi')}${f('w_to','Drop-off suburb',j.to,'text','','e.g. Parramatta')}<label class="f full"><span>Big items (optional)</span><textarea id="w_items" rows="2" placeholder="e.g. Fridge, 2 queen beds, 3-seat sofa, 30 boxes">${esc(j.items||'')}</textarea></label></div>`;
   if(st===2){const t=todayStr(),sat=addDays(t,(6-parse(t).getDay()+7)%7||7);
     b=`<div class="chips">${[['Today',t],['Tomorrow',addDays(t,1)],['Saturday',sat]].map(([l,v])=>`<button data-act="wDate" data-v="${v}" aria-pressed="${j.date===v}">${l}</button>`).join('')}</div><div class="form">${f('w_date','Date',j.date,'date')}${f('w_start','Start time',j.start,'time')}${f('w_est','Estimated hours',j.estHours,'number')}</div>`}
@@ -3149,7 +3172,7 @@ function jobView(d){
   const j=S.jobs[d.id];if(!j)return null;
   const isCo=UI.role==='company',a=!isCo&&j.crew?.[UI.crewId];
   const reqBox=isCo&&j.requested?`<section class="sendbox reqbox"><div><div class="eyebrow">Booking request from the customer</div><h3 style="margin-top:4px">${esc(j.customer)} · ${esc(moveTags(j).join(' · ')||'Move')}</h3><div class="small muted">${fd(j.date)} · prefers ${j.start} · ${esc([j.from,j.to].filter(Boolean).join(' → '))}${j.customerPhone?' · '+esc(j.customerPhone):''}</div>${j.items?`<div class="small muted">Big items: ${esc(j.items)}</div>`:''}${j.notes?`<div class="quote" style="margin-top:8px">“${esc(j.notes)}”</div>`:''}</div>
-    <div class="form"><label class="f"><span>Your price per hour ($)</span><input id="rq_rate" type="number" step="any" min="0" inputmode="decimal" value="${esc(j.custRate||'')}" placeholder="e.g. 150"></label><label class="f"><span>Start time</span><input id="rq_start" type="time" value="${esc(j.start)}"></label><label class="f"><span>Estimated hours</span><input id="rq_est" type="number" step="any" min="0" value="${esc(j.estHours)}"></label><label class="f"><span>Movers</span><input id="rq_need" type="number" min="1" value="${esc(j.crewNeeded)}"></label></div>
+    <div class="form"><label class="f"><span>Your price per hour ($)</span><input id="rq_rate" type="number" step="any" min="0" inputmode="decimal" value="${esc(j.custRate||'')}" placeholder="e.g. 150"></label><label class="f"><span>Start time</span><input id="rq_start" type="time" value="${esc(j.start)}"></label><label class="f"><span>Estimated hours</span><input id="rq_est" type="number" step="any" min="0" value="${esc(j.estHours)}"></label><label class="f"><span>Removalists</span><input id="rq_need" type="number" min="1" value="${esc(j.crewNeeded)}"></label></div>
     <div class="row"><button class="btn ok" style="flex:1" data-act="reqConfirm">Confirm booking</button><button class="btn danger" data-act="reqDecline">Decline</button></div><div class="small faint">The customer gets your price and time straight away. Then pick your crew or post it to the job board.</div></section>`:'';
   let act='';
   if(a){const s=aState(a);
@@ -3442,7 +3465,7 @@ document.addEventListener('click',async e=>{
       if(!qOpen(q)){toast('Sorry, this request just closed');drawDrawer();return}
       const tot=x.fixed?+x.rate:r2((+x.rate)*(+x.hours||0)),first=!q.quotes?.[co];d.busy=true;t.disabled=true;
       const qt={rate:+x.rate,hours:x.fixed?null:+x.hours||0,fixed:!!x.fixed,movers:Math.max(1,parseInt(x.movers)||2),arrival:x.arrival||q.start,msg:(x.msg||'').trim(),total:tot,t:new Date().toISOString(),dt:q.quotes?.[co]?.dt??Math.max(1,Math.round((Date.now()-new Date(q.createdAt).getTime())/60000)),status:'sent'};
-      try{await patch('qreqs',q.id,{quotes:{[co]:qt},...(!(q.matched||[]).includes(co)?{matched:[...(q.matched||[]),co]}:{}),...(q.status==='nomatch'?{status:'open'}:{})});if(first)await notify('customer','q:'+q.id,'sent',`New quote from ${O().name}`,`${money0(tot)} · ${qt.movers} movers · arrives ${qt.arrival}`,null,null,{qid:q.id});
+      try{await patch('qreqs',q.id,{quotes:{[co]:qt},...(!(q.matched||[]).includes(co)?{matched:[...(q.matched||[]),co]}:{}),...(q.status==='nomatch'?{status:'open'}:{})});if(first)await notify('customer','q:'+q.id,'sent',`New quote from ${O().name}`,`${money0(tot)} · ${qt.movers} removalists · arrives ${qt.arrival}`,null,null,{qid:q.id});
         d.busy=false;d.editing=false;d.form=null;celebrate('sent');toast(first?'Quote sent. The customer has been told.':'Quote updated');drawDrawer()}catch(_){d.busy=false;t.disabled=false}break}
     case 'qPass':{if(!t.dataset.sure){t.dataset.sure=1;t.textContent='Tap again to pass';return}await patch('qreqs',d.id,{quotes:{[UI.coId]:{status:'passed',t:new Date().toISOString()}}});toast('Passed. It won\'t show again.');closeDrawer();break}
     case 'qWithdraw':{if(!t.dataset.sure){t.dataset.sure=1;t.textContent='Tap again to withdraw';return}await patch('qreqs',d.id,{quotes:{[UI.coId]:{status:'withdrawn'}}});toast('Quote withdrawn');drawDrawer();break}
@@ -3795,7 +3818,7 @@ function rankView(d){const kind=d.kind,id=d.id,X=xpOf(kind,id),L=lvOf(X.xp,kind)
   return {title:kind==='crew'?'Your truck class':'Your fleet class',body:`
    <section class="lvhero ${tierOf(L.lv)}">${lvBadge(L.lv,'xl')}<div class="lvh-l">Truck class ${L.lv} of 10</div><div class="lvh-n">${esc(L.name)}</div>
     <div class="lvbar big"><i style="width:${L.pct}%"></i></div><div class="lvh-s"><b class="num">${X.xp.toLocaleString('en-AU')} km</b>${L.next!=null?` · ${L.toGo.toLocaleString('en-AU')} km to <b>${esc(L.nextName)}</b>`:' · biggest truck on the road'}</div>
-    <div class="lvh-r">#${pos} of ${board.length} ${kind==='crew'?'movers':'companies'} on Truckle</div></section>
+    <div class="lvh-r">#${pos} of ${board.length} ${kind==='crew'?'removalists':'companies'} on Truckle</div></section>
    <section class="card"><div class="card-h"><h3>Badges</h3><span class="small muted">${X.badges.filter(b=>b[3]).length} of ${X.badges.length}</span></div><div class="bdg">${X.badges.filter(b=>!b[4]).map(badgeTile).join('')}</div>
    <div class="leg-h"><b>Legendary</b><span>Very hard to get. Each one takes 5% off your Truckle plan.</span></div><div class="bdg leg">${X.badges.filter(b=>b[4]).map(badgeTile).join('')}</div></section>
    <section class="card"><div class="card-h"><h3>Leaderboard</h3><span class="small muted">All time</span></div><div class="lb">${board.slice(0,10).map((x,i)=>{const l=lvOf(x.xp,kind);return `<div class="${x.k===id?'me':''}"><span class="lb-n ${i<3?'p'+(i+1):''}">${i+1}</span><span class="lb-a">${esc(initials(nm(x.k)))}</span><b>${esc(nm(x.k))}${x.k===id?' <em>You</em>':''}</b>${lvBadge(l.lv,'sm')}<span class="num lb-x">${x.xp.toLocaleString('en-AU')}</span></div>`}).join('')}${pos>10?`<div class="me"><span class="lb-n">${pos}</span><span class="lb-a">${esc(initials(nm(id)))}</span><b>${esc(nm(id))} <em>You</em></b>${lvBadge(L.lv,'sm')}<span class="num lb-x">${X.xp.toLocaleString('en-AU')}</span></div>`:''}</div></section>
