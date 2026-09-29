@@ -26,7 +26,7 @@
  window.claude={use:function(n){return Promise.resolve(n==='db'?db:null)}};
  window.truckleResetDemo=function(){localStorage.removeItem(KEY);location.reload()};
 })();
-</script><title>Truckle</title>
+</script><script src="/api/config"></script><script src="/live.js"></script><title>Truckle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap">
 <style>
@@ -1892,6 +1892,7 @@ function tHours(a){
 const tPay=a=>r2(tHours(a)*(+a.rate||0)+(+a.tolls||0));
 
 // ================= state =================
+const LIVE=!!(window.TL&&TL.live),SIM=()=>LIVE?(TL.testMode?'Test mode':'Live'):'Demo';
 const S={org:null,crew:{},jobs:{},invoices:{},expenses:{},chats:{},companies:{},links:{},notes:{},cinvoices:{},qreqs:{},customers:{},reviews:{}};
 const UI={role:'company',coId:'org',crewId:null,thread:null,page:'dash',weekOf:weekStart(todayStr()),fy:fyOf(todayStr()),drawer:null,mper:'fy'};
 let db=null,live=false,downloads=null,mcp=null,ready=false;
@@ -2390,7 +2391,7 @@ function hideSplash(){if(!SESSION&&$('#auth')&&$('#auth').hidden&&!AUTH.step)aut
 setTimeout(()=>{const s=$('#splash');if(s&&!s.dataset.out){s.dataset.out=1;s.classList.add('out');setTimeout(()=>s.remove(),480)}},6000);
 // ================= render =================
 function render(){
-  if(!ready){$('#main').innerHTML='<div class="empty">Loading…</div>';return}
+  if(!ready){$('#main').innerHTML='<div class="empty">Loading…</div>';if(LIVE&&!SESSION)hideSplash();return}
   hideSplash();
   fixView();
   const ae=document.activeElement;
@@ -2637,10 +2638,10 @@ function authStep(step,via){const box=$('#auth');if(!box)return;box.hidden=false
   if(step==='start')h=`${brand}<h1 class="disp">Moving,<br><span>sorted.</span></h1><p class="au-sub">Book a removalist, run your crew, or find moving work. All in one app.</p>
     <div class="au-btns"><button class="au-b" data-act="authGo" data-v="role" data-via="google">${LOGOS.google}Continue with Google</button><button class="au-b" data-act="authGo" data-v="role" data-via="facebook">${LOGOS.facebook}Continue with Facebook</button><button class="au-b" data-act="authGo" data-v="role" data-via="apple">${LOGOS.apple}Continue with Apple</button>
     <div class="au-or"><span>or</span></div><button class="au-b au-mail" data-act="authGo" data-v="email" data-via="email">✉&nbsp; Continue with email</button></div>
-    <p class="au-fine">By continuing you agree to Truckle's terms and privacy policy.<br><span>Demo: sign-in isn't connected to real accounts yet.</span></p>`;
+    <p class="au-fine">By continuing you agree to Truckle's terms and privacy policy.<br>${LIVE?'':`<span>Demo: sign-in isn't connected to real accounts yet.</span>`}</p>`;
   else if(step==='email')h=`<button class="au-back" data-act="authGo" data-v="start">‹ Back</button>${brand}<h2 class="au-h">Log in or sign up</h2><p class="au-sub">Use your email and a password.</p>
     <div class="au-form"><label class="f full"><span>Email</span><input id="au_email" type="email" autocomplete="email" placeholder="you@example.com"></label><label class="f full"><span>Password</span><input id="au_pw" type="password" autocomplete="current-password" placeholder="6 or more characters"></label><label class="f full"><span>First name (new accounts)</span><input id="au_name" autocomplete="given-name" placeholder="Optional"></label></div>
-    <button class="btn mega go" data-act="authEmail">Continue</button><button class="au-link" data-act="authGo" data-v="email">Forgot password?</button>`;
+    <button class="btn mega go" data-act="authEmail">Continue</button><button class="au-link" data-act="${LIVE?'authReset':'authGo'}" data-v="email">Forgot password?</button>`;
   else if(step==='role'){const who={google:'Google',facebook:'Facebook',apple:'Apple',email:'email'}[AUTH.via]||'email';
     h=`<button class="au-back" data-act="authGo" data-v="start">‹ Back</button>${brand}<div class="au-ok">✓ Signed in with ${who}${AUTH.email?' · '+esc(AUTH.email):''}</div><h2 class="au-h">How will you use Truckle?</h2>
     <label class="f full" style="margin-bottom:14px"><span>Your first name</span><input id="au_nm" autocomplete="given-name" value="${esc(AUTH.name||'')}" placeholder="e.g. George"></label>
@@ -2916,9 +2917,14 @@ function viewBills(){
 }
 
 // ================= COMPANY: settings =================
+function payCard(){const p=O().payouts,inv=TL.inviteLink();
+  return `<section class="card"><div class="card-h"><h2>Truckle Pay</h2><span class="sim">${SIM()}</span></div>
+   ${p?.status==='active'?`<div class="banner good"><span style="font-size:20px">✓</span><div class="grow"><b>Customers can pay you in Truckle</b><div class="small muted">Card, Apple Pay, Google Pay and bank. Money goes to ${esc(p.bankName||'your bank')}${p.last4?' ending '+esc(p.last4):''}.</div></div></div>`
+    :`<p class="muted" style="margin:0 0 10px">${p?.status==='review'?'Stripe is checking your details. You can add anything missing below.':'Let customers pay your invoices by card, Apple Pay or bank. Stripe checks your ABN, ID and bank once (about 5 minutes).'}</p><button class="btn go" data-act="coPayouts">${p?'Finish setup':'Turn on Truckle Pay'}</button>`}
+   ${inv?`<div class="form" style="margin-top:14px"><label class="f full"><span>Invite link for your crew</span><input readonly value="${esc(inv)}" onclick="this.select()"></label></div><button class="btn sm" data-act="copyText" data-v="${esc(inv)}">Copy invite link</button>`:''}</section>`}
 function viewSettings(){
   const o=O(),f=(id,l,v,type='text')=>`<label class="f"><span>${l}</span><input id="${id}" type="${type}" value="${esc(v)}"></label>`;
-  return {title:'Settings',body:`<section class="card"><div class="card-h"><h2>Paying your crew</h2><span class="sim">Demo</span></div><p class="muted" style="margin:0">Bills are paid inside Truckle. Your crew gets the money in their bank account, and both of you get a receipt. Default method: <b>PayTo</b> (1% + 30c, max $3.50). Truckle fee: ${PAY.platformPct*100}% per paid bill, max $${PAY.platformCap}.</p></section>
+  return {title:'Settings',body:`${LIVE?payCard():''}<section class="card"><div class="card-h"><h2>Paying your crew</h2><span class="sim">${SIM()}</span></div><p class="muted" style="margin:0">Bills are paid inside Truckle. Your crew gets the money in their bank account, and both of you get a receipt. Default method: <b>PayTo</b> (1% + 30c, max $3.50). Truckle fee: ${PAY.platformPct*100}% per paid bill, max $${PAY.platformCap}.</p></section>
    <section class="card"><h2>Company</h2><div class="form" style="margin-top:12px">
     ${f('o_name','Company name',o.name)}${f('o_abn','ABN',o.abn)}${f('o_email','Accounts email (crew invoices go here)',o.email,'email')}${f('o_phone','Phone / WhatsApp',o.phone,'tel')}
     ${f('o_terms','Pay crew within (days)',o.terms,'number')}${f('o_prefix','Job number prefix',o.jobPrefix)}
@@ -3284,15 +3290,15 @@ function custQuoteCard(j){const q=j.quote;if(!q||q.status!=='sent')return '';con
 function cinvView(d){
   if(!d.id)return cinvEditor(d);
   const c=S.cinvoices[d.id];if(!c)return null;const st=c.status,steps=[['Sent',c.issuedAt],['Opened',c.viewedAt],['Paid',c.paidAt]],cur=st==='paid'?3:st==='viewed'?2:1;
-  const wa=c.phone?'https://wa.me/'+waNumber(c.phone)+'?text='+encodeURIComponent(`Hi ${firstName(c.customer)||'there'}, thanks for moving with ${company(c.companyId).name}! Your invoice ${c.number} is ${money(c.total)}. You can pay by card, Apple Pay or bank in the link we texted you.`):null;
+  const wa=c.phone?'https://wa.me/'+waNumber(c.phone)+'?text='+encodeURIComponent(`Hi ${firstName(c.customer)||'there'}, thanks for moving with ${company(c.companyId).name}! Your invoice ${c.number} is ${money(c.total)}. You can pay by card, Apple Pay or bank ${LIVE?'here: '+TL.payLink(c.id):'in the link we texted you'}.`):null;
   return {title:`${c.number} · ${c.customer||'Customer'}`,body:`<div class="steps" style="grid-template-columns:repeat(3,minmax(0,1fr))">${steps.map(([l,at],i)=>`<div class="st ${i<cur?(i===2?'paid done':'done'):''}"><i></i>${l}<small>${at?(at.length>10?fdt(at):fd(at)):'–'}</small></div>`).join('')}</div>
-    ${st==='paid'?`<div class="paidbar" style="animation:none"><span class="pb-ic">$</span><div class="grow"><b>${esc(c.customer||'Customer')} paid ${money(c.total)}</b><div class="small">${c.payment?.via==='crewbill'?`${esc(c.payment.label)} · ${money(c.payment.net)} added to your Truckle balance`:'Paid another way'+(c.payment?.ref?' · '+esc(c.payment.ref):'')}</div></div></div>`:''}
+    ${st==='paid'?`<div class="paidbar" style="animation:none"><span class="pb-ic">$</span><div class="grow"><b>${esc(c.customer||'Customer')} paid ${money(c.total)}</b><div class="small">${c.payment?.via==='stripe'?`${esc(c.payment.label)} · ${money(c.payment.net)} on its way to your bank${c.payment.testMode?' (test)':''}`:c.payment?.via==='crewbill'?`${esc(c.payment.label)} · ${money(c.payment.net)} added to your Truckle balance`:'Paid another way'+(c.payment?.ref?' · '+esc(c.payment.ref):'')}</div></div></div>`:''}
     <section class="card cpaper"><div class="row spread"><div><div class="eyebrow">Tax invoice</div><b class="num" style="font-size:18px">${esc(c.number)}</b></div><div style="text-align:right"><b>${esc(company(c.companyId).name)}</b><div class="small faint">ABN ${esc(company(c.companyId).abn||'—')}</div></div></div>
       <div class="small muted" style="margin:8px 0">Bill to <b style="color:var(--ink)">${esc(c.customer)}</b>${c.address?', '+esc(c.address):''}${c.phone?' · '+esc(c.phone):''} · issued ${fd(c.issuedAt)} · ${esc(dueLabel(c))}</div>
       ${c.lines.map(l=>`<div class="cl"><span>${esc(l.desc)}${lineSub(l)?`<em>${lineSub(l)}</em>`:''}</span><b class="num">${moneyS(l.amount)}</b></div>`).join('')}
       <div class="cl tot"><span>Total${c.gstIncl?` <em>includes GST ${money(c.gst)}</em>`:''}</span><b class="num">${money(c.total)}</b></div>${c.notes?`<div class="small muted" style="padding-top:8px">${esc(c.notes)}</div>`:''}
-      ${c.payment?.via==='crewbill'?`<div class="cl"><span class="faint">${esc(c.payment.label)} fee</span><span class="num faint">−${money(c.payment.fee)}</span></div><div class="cl"><span class="faint">Truckle fee</span><span class="num faint">−${money(c.payment.plat)}</span></div><div class="cl"><span><b>You received</b></span><b class="num" style="color:var(--ok)">${money(c.payment.net)}</b></div>`:''}</section>
-    ${st!=='paid'?`<button class="btn mega go" data-act="cpayOpen">See the customer's pay page</button><div class="small faint" style="text-align:center">In the live app the customer gets this as a link by text and email. Here you can open it and pay as them.</div>
+      ${['crewbill','stripe'].includes(c.payment?.via)?`<div class="cl"><span class="faint">${esc(c.payment.label)} fee</span><span class="num faint">−${money(c.payment.fee)}</span></div><div class="cl"><span class="faint">Truckle fee</span><span class="num faint">−${money(c.payment.plat)}</span></div><div class="cl"><span><b>You received</b></span><b class="num" style="color:var(--ok)">${money(c.payment.net)}</b></div>`:''}</section>
+    ${st!=='paid'?`<button class="btn mega go" data-act="cpayOpen">See the customer's pay page</button>${LIVE?`<div class="form"><label class="f full"><span>Pay link for ${esc(firstName(c.customer)||'your customer')}</span><input readonly value="${esc(TL.payLink(c.id))}" onclick="this.select()"></label></div><button class="btn" data-act="copyText" data-v="${esc(TL.payLink(c.id))}">Copy pay link</button>`:`<div class="small faint" style="text-align:center">In the live app the customer gets this as a link by text and email. Here you can open it and pay as them.</div>`}
     <div class="row">${wa?`<a class="btn wa" href="${wa}" target="_blank" rel="noopener">Message on WhatsApp</a>`:''}<button class="btn" data-act="ciEditSent">Edit invoice</button><button class="btn" data-act="ciOther">Paid cash / bank</button></div>
     ${d.other?`<div class="sendbox"><label class="f"><span>Reference (optional)</span><input id="ciRef" placeholder="e.g. cash, or bank ref"></label><button class="btn ok" data-act="ciOtherDone">Mark ${money(c.total)} as paid</button></div>`:''}`:''}`};
 }
@@ -3342,7 +3348,7 @@ function cpayView(d){
     <div class="cp-lines">${c.lines.map(l=>`<div><span>${esc(l.desc)}${lineSub(l)?`<em class="cp-sub">${lineSub(l)}</em>`:''}</span><b class="num">${moneyS(l.amount)}</b></div>`).join('')}</div>${c.notes?`<div class="cp-note">${esc(c.notes)}</div>`:''}
     <div class="cp-meth">${Object.entries(CPAY).map(([k,x])=>`<label class="cpm"><input type="radio" name="cpm" value="${k}" ${k===m?'checked':''} data-act="cpm"><div class="grow"><b>${esc(x.label)}</b><div class="small">${esc(x.sub)}</div></div></label>`).join('')}</div>
     <button class="btn mega go" data-act="cpayNow">Pay ${money(c.total)}</button>
-    <div class="cp-foot">${I.lock} Secured by Stripe · <span class="sim" style="background:rgba(255,255,255,.12);color:#fff">Demo</span> · Powered by <b>truck<i>le</i></b></div></div>`};
+    <div class="cp-foot">${I.lock} Secured by Stripe · <span class="sim" style="background:rgba(255,255,255,.12);color:#fff">${SIM()}</span> · Powered by <b>truck<i>le</i></b></div></div>`};
 }
 function custBox(j){const c=cinvOfJob(j.id);
   if(c)return `<button class="lrow" style="border-radius:18px;background:var(--surface);box-shadow:var(--shadow)" data-act="cinvOpen" data-id="${c.id}"><span class="lic">$</span><div class="grow"><b>Customer invoice ${esc(c.number)}</b><div class="small muted">${c.status==='paid'?'Paid '+fd(c.paidAt):'Sent '+fd(c.issuedAt)}</div></div>${cpill(c)}<b class="num">${money(c.total)}</b></button>`;
@@ -3646,19 +3652,19 @@ function notesView(){
   return {title:'Notifications',body:`${ns.some(n=>!n.read)?'<div class="row"><button class="btn sm" data-act="notesRead">Mark all as read</button></div>':''}<section class="card"><div class="notes">${ns.map(n=>`<button class="nt ${n.read?'':'unread'}" data-act="noteOpen" data-id="${n.id}"><span class="ic ic-${n.kind}">${NICON[n.kind]||'•'}</span><div class="grow"><div class="t">${esc(n.title)}</div><div class="small muted">${esc(n.body)}</div><div class="small faint">${msgTime(n.t)}</div></div></button>`).join('')||'<div class="empty">Nothing yet. Job and invoice updates show up here.</div>'}</div></section>`};
 }
 function checkoutView(d){
-  const inv=S.invoices[d.id];if(!inv)return null;const m=payMethod(d.method||'payto'),balOk=balanceOf(invCo(inv))>=inv.total;
+  const inv=S.invoices[d.id];if(!inv)return null;const m=payMethod(d.method||'payto'),balOk=!LIVE&&balanceOf(invCo(inv))>=inv.total;
   const proc=r2(m.fee(inv.total)),plat=platFee(inv.total),tot=r2(inv.total+proc+plat),c=S.crew[inv.crewId];
   if(d.stage==='done')return {title:'Payment sent',body:`<div class="card" style="text-align:center"><div style="font-size:44px;color:var(--ok)">✓</div><h2>${money(tot)} paid</h2><p class="muted" style="margin:6px 0 0">${esc(firstName(c.name))} has been notified. ${money(inv.total)} lands in their account by ${fd(inv.payment?.payoutEta||todayStr())}.</p></div>
     <div class="row"><button class="btn primary" data-inv="${inv.id}">View receipt</button><button class="btn ghost" data-act="close">Done</button></div>`};
   if(d.stage==='proc'){const st=d.step||0,lines=[m.label==='Business card'?'Authorising card':'Confirming '+m.label+' with your bank','Sending '+money(inv.total)+' to '+firstName(c.name),'Notifying '+firstName(c.name)];
     return {title:'Paying '+inv.number,body:`<div class="checkout"><div class="ch-h"><b>Truckle Pay</b><span class="num">${money(tot)}</span></div><div class="ch-b"><div class="proc">${lines.map((l,k)=>`<div class="${k<st?'ok':k===st?'on':''}">${k<st?'<b>✓</b>':k===st?'<span class="spin"></span>':'<b></b>'}${esc(l)}</div>`).join('')}</div></div></div>`}}
   const meth=[...(balOk?[['balance',payMethod('balance')]]:[]),...Object.entries(PAY.methods)].map(([k,x])=>`<label class="mopt"><input type="radio" name="pm" value="${k}" ${k===(d.method||'payto')?'checked':''} data-act="pm"><div class="grow"><b>${esc(x.label)}</b>${k==='balance'?' <span class="pill p-green">No fee</span>':k==='payto'&&!balOk?' <span class="pill p-green">Lowest fee</span>':''}<div class="small muted">${esc(x.sub)}</div></div><span class="small faint num">${esc(x.feeTxt)}</span></label>`).join('');
-  return {title:'Pay '+inv.number,body:`<div class="checkout"><div class="ch-h"><div><div class="small" style="opacity:.8">Paying</div><b>${esc(c.name)}</b>${c.abn?`<div class="small" style="opacity:.8">ABN ${esc(c.abn)}</div>`:''}</div><span class="sim" style="background:rgba(255,255,255,.14);color:#fff">Demo · no real money</span></div>
+  return {title:'Pay '+inv.number,body:`<div class="checkout"><div class="ch-h"><div><div class="small" style="opacity:.8">Paying</div><b>${esc(c.name)}</b>${c.abn?`<div class="small" style="opacity:.8">ABN ${esc(c.abn)}</div>`:''}</div><span class="sim" style="background:rgba(255,255,255,.14);color:#fff">${LIVE&&!TL.testMode?'Secure payment':SIM()+' · no real money'}</span></div>
     <div class="ch-b"><span class="eyebrow">Pay with</span>${meth}
      <div class="feet"><span>Invoice ${esc(inv.number)}</span><span class="num">${money(inv.total)}</span><span class="muted">${d.method==='balance'?'Processing':esc(m.label)+' processing'}</span><span class="num">${money(proc)}</span><span class="muted">Truckle fee</span><span class="num">${money(plat)}</span><span class="tot">You pay</span><span class="tot num">${money(tot)}</span></div>
      <div class="note">${esc(firstName(c.name))} receives the full <b class="num">${money(inv.total)}</b>${c.payouts?.status==='active'?' in their bank ending '+esc(c.payouts.last4):' by bank transfer to BSB '+esc(inv.fromSnap.bsb||'on file')}.</div>
      <button class="btn ok xl" data-act="payNow">Pay ${money(tot)}</button>
-     <div class="secure">${I.lock}<span>Payments will run through Stripe. Truckle never sees your bank login.</span></div></div></div>`};
+     <div class="secure">${I.lock}<span>Payments ${LIVE?'run':'will run'} through Stripe. Truckle never sees your bank login.</span></div></div></div>`};
 }
 function payoutsView(d){
   if(d.stage==='done')return {title:'Payouts on',body:`<div class="card" style="text-align:center"><div style="font-size:44px;color:var(--ok)">✓</div><h2>You can now be paid in Truckle</h2><p class="muted">Companies pay with one tap and the money goes to your bank.</p></div><button class="btn primary" data-act="close">Done</button>`};
@@ -3859,7 +3865,7 @@ document.addEventListener('click',async e=>{
     case 'ciOtherDone':{const c=S.cinvoices[d.id],ref=($('#ciRef')?.value||'').trim();await patch('cinvoices',c.id,{status:'paid',paidAt:todayStr(),payment:{via:'other',ref},history:[...(c.history||[]),{t:new Date().toISOString(),what:'Marked paid'+(ref?' ('+ref+')':''),who:O().name}]});d.other=false;celebrate('paid');toast('Marked paid');break}
     case 'cpayOpen':{const c=S.cinvoices[d.id];if(c.status==='sent')await patch('cinvoices',c.id,{status:'viewed',viewedAt:new Date().toISOString(),history:[...(c.history||[]),{t:new Date().toISOString(),what:'Opened by customer',who:c.customer}]});openDrawer({type:'cpay',id:c.id,method:UI.role==='customer'?(custInfo(UI.custKey).payPref||'card'):'card'});break}
     case 'cpm':if(t.value&&d){d.method=t.value;drawDrawer()}break;
-    case 'cpayNow':{if(d.busy)return;const c=S.cinvoices[d.id],m=d.method||'card',W=ms=>new Promise(r=>setTimeout(r,ms));d.busy=true;d.stage='proc';d.step=0;drawDrawer();await W(600);d.step=1;drawDrawer();
+    case 'cpayNow':{if(d.busy)return;if(LIVE){d.busy=true;t.disabled=true;t.textContent='Opening secure checkout…';try{await TL.payCinvoice(d.id,d.method||'card')}catch(e){d.busy=false;t.disabled=false;drawDrawer();toast(e.message)}break}const c=S.cinvoices[d.id],m=d.method||'card',W=ms=>new Promise(r=>setTimeout(r,ms));d.busy=true;d.stage='proc';d.step=0;drawDrawer();await W(600);d.step=1;drawDrawer();
       const n=cpayNet(c,m),now=new Date().toISOString();
       try{await patch('cinvoices',c.id,{status:'paid',paidAt:todayStr(),payment:{via:'crewbill',method:m,label:CPAY[m].label,fee:n.fee,plat:n.plat,net:n.net,ref:'pi_sim_'+uid(),at:now,simulated:true},history:[...(c.history||[]),{t:now,what:'Paid by '+CPAY[m].label,who:c.customer}]});
         await notify('company',c.companyId,'paid',`${c.customer||'Customer'} paid ${money(c.total)}`,`${c.number} · ${money(n.net)} added to your Truckle balance`,null,c.jobId)}catch(_){d.busy=false;d.stage=null;drawDrawer();return}
@@ -3875,12 +3881,15 @@ document.addEventListener('click',async e=>{
     case 'quoteAccept':{const j=S.jobs[t.dataset.id];if(!j?.quote)return;await patch('jobs',j.id,{quote:{status:'accepted',decidedAt:new Date().toISOString()},confirmedAt:j.confirmedAt||new Date().toISOString()});
       await notify('company',jobCo(j)||'org','paid',`${firstName(j.customer)||'Customer'} accepted your quote`,`${j.ref} · ${money0(j.quote.total)} · ${fd(j.date)} ${j.start}`,null,j.id);toast('Quote accepted. You\'re booked in!');if(UI.drawer?.type==='cquote')openDrawer({type:'cquote',id:j.id});break}
     case 'stGo':case 'stChip':{const v=$('#st_from')?.value.trim()||'';UI.bk=UI.bk||null;const k=UI.custKey;if(!UI.bk){UI.page='book';viewBook()}UI.bk.from=v||UI.bk.from;UI.bk.mode='quote';if(a==='stChip'){const x=t.dataset.v;if(x==='Piano'){UI.bk.extras=[...new Set([...(UI.bk.extras||[]),'Piano'])];UI.bk.size=UI.bk.size||'2 bed'}else UI.bk.size=x}UI.page='book';UI.pageAnim=true;render();scrollTo(0,0);break}
-    case 'authGo':authStep(t.dataset.v,t.dataset.via);break;
-    case 'authEmail':{const em=($('#au_email')?.value||'').trim(),pw=$('#au_pw')?.value||'';if(!/^\S+@\S+\.\S+$/.test(em)){toast('Enter your email address');return}if(pw.length<6){toast('Password needs 6 or more characters');return}AUTH.email=em;AUTH.name=($('#au_name')?.value||'').trim()||em.split('@')[0].replace(/[._\d]+/g,' ').trim();AUTH.via='email';authStep('role');break}
-    case 'authRole':{const r=t.dataset.v,nm=($('#au_nm')?.value||'').trim()||AUTH.name||'';SESSION={name:firstName(nm)||nm,email:AUTH.email||'',via:AUTH.via||'email',role:r,at:new Date().toISOString()};try{localStorage.setItem('truckle.session',JSON.stringify(SESSION))}catch(_){}
+    case 'authGo':if(LIVE&&['google','facebook','apple'].includes(t.dataset.via)){TL.oauth(t.dataset.via).catch(e=>toast(/not enabled|provider/i.test(e.message||'')?'That sign-in option isn\'t switched on yet. Use email for now.':e.message));break}authStep(t.dataset.v,t.dataset.via);break;
+    case 'authReset':{const em=($('#au_email')?.value||'').trim();if(!/^\S+@\S+\.\S+$/.test(em)){toast('Enter your email address first');return}try{await TL.resetPassword(em);toast('Check your email for a link to reset your password')}catch(e){toast(e.message)}break}
+    case 'authEmail':{const em=($('#au_email')?.value||'').trim(),pw=$('#au_pw')?.value||'';if(!/^\S+@\S+\.\S+$/.test(em)){toast('Enter your email address');return}if(pw.length<6){toast('Password needs 6 or more characters');return}AUTH.email=em;AUTH.name=($('#au_name')?.value||'').trim()||em.split('@')[0].replace(/[._\d]+/g,' ').trim();AUTH.via='email';
+      if(LIVE){t.disabled=true;try{const r=await TL.emailAuth(em,pw,AUTH.name);if(r.confirm){toast('Check your email to confirm your account, then come back and sign in');t.disabled=false;return}}catch(e){t.disabled=false;toast(e.message||'Could not sign in');return}}
+      authStep('role');break}
+    case 'authRole':{const r=t.dataset.v,nm=($('#au_nm')?.value||'').trim()||AUTH.name||'';if(LIVE){if(t.disabled)return;t.disabled=true;try{await TL.chooseRole(r,firstName(nm)||nm)}catch(e){t.disabled=false;toast(e.message);return}}SESSION={name:firstName(nm)||nm,email:AUTH.email||'',via:AUTH.via||'email',role:r,at:new Date().toISOString()};try{localStorage.setItem('truckle.session',JSON.stringify(SESSION))}catch(_){}
       const box=$('#auth');box.classList.add('out');setTimeout(()=>{box.hidden=true;box.classList.remove('out')},420);
       if(r==='company')setRole('company:'+(coArr()[0]?.id||'org'));else if(r==='crew'){const c=allCrew()[0];c?setRole('crew:'+c.id):setRole('join')}else setRole('customer:'+((UI.role==='customer'&&UI.custKey)||'new'));toast(`Welcome${SESSION.name?', '+SESSION.name:''}!`);break}
-    case 'logout':{SESSION=null;try{localStorage.removeItem('truckle.session')}catch(_){}UI.drawer=null;$('#drawerRoot').innerHTML='';authStep('start');break}
+    case 'logout':{if(LIVE){TL.signOut();break}SESSION=null;try{localStorage.removeItem('truckle.session')}catch(_){}UI.drawer=null;$('#drawerRoot').innerHTML='';authStep('start');break}
     case 'cquoteOpen':openDrawer({type:'cquote',id:t.dataset.id});break;
     case 'feedF':UI.feedF=t.dataset.v;UI.page='feed';UI.pageAnim=true;render();scrollTo(0,0);break;
     case 'goStep':{const el=document.getElementById('step'+t.dataset.v);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}else{UI.page=t.dataset.pg;UI.pageAnim=true;render();scrollTo(0,0)}break}
@@ -3965,9 +3974,9 @@ document.addEventListener('click',async e=>{
     case 'approve':{const inv=S.invoices[d.id];t.disabled=true;await approveInv(d.id);toast(`Approved · ${firstName(crewName(inv.crewId))} has been told`);break}
     case 'markPaid':{const ref=($('#payRef')?.value||'').trim();const inv=S.invoices[d.id];await addHistory(d.id,'Paid outside Truckle'+(ref?' (ref '+ref+')':''),{status:'paid',paidAt:todayStr(),paidRef:ref});await postMsg(chatKey(invCo(inv),inv.crewId),'company',`Paid ${inv.number} · ${money(inv.total)}${ref?' · ref '+ref:''}`,{kind:'paid'});
       await notify('crew',inv.crewId,'paid',`${O().name} paid you ${money(inv.total)}`,`${inv.number} · by bank transfer${ref?' · ref '+ref:''}`,inv.id);celebrate('paid');toast(`Paid ${firstName(crewName(inv.crewId))} ${money(inv.total)}`);break}
-    case 'checkout':{const iv=S.invoices[d.id];openDrawer({type:'checkout',id:d.id,method:balanceOf(invCo(iv))>=iv.total?'balance':'payto'});break}
+    case 'checkout':{const iv=S.invoices[d.id];openDrawer({type:'checkout',id:d.id,method:!LIVE&&balanceOf(invCo(iv))>=iv.total?'balance':'payto'});break}
     case 'pm':if(t.value&&d){d.method=t.value;drawDrawer()}break;
-    case 'payNow':{if(d.busy)return;const W=ms=>new Promise(r=>setTimeout(r,ms));d.busy=true;d.stage='proc';d.step=0;drawDrawer();await W(550);d.step=1;drawDrawer();
+    case 'payNow':{if(d.busy)return;if(LIVE){d.busy=true;t.disabled=true;t.textContent='Opening secure checkout…';try{await TL.payInvoice(d.id,d.method||'payto')}catch(e){d.busy=false;t.disabled=false;drawDrawer();toast(e.message)}break}const W=ms=>new Promise(r=>setTimeout(r,ms));d.busy=true;d.stage='proc';d.step=0;drawDrawer();await W(550);d.step=1;drawDrawer();
       try{await payInApp(d.id,d.method||'payto')}catch(_){d.busy=false;d.stage=null;drawDrawer();return}
       await W(350);d.step=2;drawDrawer();await W(300);d.stage='done';d.busy=false;drawDrawer();celebrate('paid');break}
     case 'notes':openDrawer({type:'notes'});break;
@@ -3984,7 +3993,9 @@ document.addEventListener('click',async e=>{
     case 'dropJob':{t.disabled=true;const r=await removeFromDraft(d.id,t.dataset.job);toast('Taken off. It stays ready for its own invoice.');if(r==='gone')closeDrawer();break}
     case 'sendDraft':{if(d.busy)return;const email=!!$('#dv_email')?.checked,note=($('#dv_note')?.value||'').trim();d.busy=true;t.disabled=true;t.textContent='Sending…';
       try{const r=await sendDraft(d.id,{email,note});d.busy=false;openDrawer({type:'sentView',id:r.inv.id,cache:r.inv,email:r.email,wa:true});celebrate('sent')}catch(e){d.busy=false;t.disabled=false;t.textContent='Try again'}break}
-    case 'payoutsSetup':openDrawer({type:'payouts'});break;
+    case 'payoutsSetup':if(LIVE){t.disabled=true;TL.connect('crew',UI.crewId).catch(e=>{t.disabled=false;toast(e.message)});break}openDrawer({type:'payouts'});break;
+    case 'coPayouts':t.disabled=true;TL.connect('company',UI.coId).catch(e=>{t.disabled=false;toast(e.message)});break;
+    case 'copyText':{const v=t.dataset.v||'';try{await navigator.clipboard.writeText(v);toast('Copied')}catch(_){toast(v)}break}
     case 'payoutsDone':{const c=me(),bsb=($('#po_bsb')?.value||'').trim(),acct=($('#po_acct')?.value||'').trim();if(!bsb||!acct){toast('Add your BSB and account number');return}
       await patch('crew',c.id,{bsb,acct,payouts:{status:'active',provider:'stripe',simulated:true,bankName:'your bank',last4:acct.replace(/\D/g,'').slice(-4),at:new Date().toISOString()}});d.stage='done';drawDrawer();celebrate('sent');break}
     case 'unpay':await addHistory(d.id,'Marked unpaid',{status:'sent',paidAt:null});break;
@@ -4195,5 +4206,5 @@ render();
 
 <div id="demoNote" style="position:fixed;left:12px;right:12px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:9999;display:none;background:#F4B000;color:#211800;border-radius:16px;padding:12px 14px;font:600 14px/1.35 Manrope,system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.35)">
 <div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1"><b>Truckle demo.</b> Switch between company, worker and customer at the top. Everything you do stays on this phone. No real payments.</div><button onclick="this.closest('#demoNote').remove();try{localStorage.setItem('truckle.note','1')}catch(_){}" style="border:0;background:#211800;color:#F4B000;border-radius:10px;padding:8px 12px;font:700 13px Manrope,system-ui,sans-serif">Got it</button></div></div>
-<script>try{if(!localStorage.getItem('truckle.note'))document.getElementById('demoNote').style.display='block'}catch(_){}
+<script>try{if(!localStorage.getItem('truckle.note')&&!(window.TL&&TL.live))document.getElementById('demoNote').style.display='block'}catch(_){}
 if('serviceWorker' in navigator)addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})});</script></body></html>
