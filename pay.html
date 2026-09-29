@@ -1,0 +1,77 @@
+<!doctype html><html lang="en-AU"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07121C"><meta name="robots" content="noindex">
+<title>Pay your invoice · Truckle</title>
+<link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#07121C;--card:#0F2233;--line:rgba(255,255,255,.1);--ink:#F2F6F9;--ink2:rgba(242,246,249,.72);--ink3:rgba(242,246,249,.5);--go:#F4B000;--go-ink:#211800;--ok:#3FC380;--bad:#FF8A7A}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:440px;margin:0 auto;padding:28px 16px 40px}
+.brand{display:flex;justify-content:center;font-weight:800;font-size:20px;letter-spacing:-.02em;margin-bottom:22px}.brand i{color:var(--go);font-style:normal}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px}
+.co{display:flex;align-items:center;gap:12px;justify-content:center}.mk{width:44px;height:44px;border-radius:14px;background:var(--go);color:var(--go-ink);display:grid;place-items:center;font-weight:800}
+.co b{font-size:17px}.sub{color:var(--ink2);text-align:center;font-size:13px;margin-top:6px}
+.amt{font-size:40px;font-weight:800;text-align:center;letter-spacing:-.03em;margin:14px 0 2px;font-variant-numeric:tabular-nums}
+.lines{border-top:1px solid var(--line);margin-top:16px;padding-top:10px}.lines div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;color:var(--ink2)}.lines b{color:var(--ink);font-variant-numeric:tabular-nums}
+.note{background:rgba(255,255,255,.05);border-radius:12px;padding:10px 12px;margin-top:10px;color:var(--ink2);font-size:13px}
+.meth{display:grid;gap:8px;margin:18px 0 14px}
+.meth label{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer}
+.meth label:has(input:checked){border-color:var(--go);background:rgba(244,176,0,.08)}
+.meth input{accent-color:var(--go);width:18px;height:18px;margin:0}
+button{appearance:none;border:0;border-radius:16px;background:var(--go);color:var(--go-ink);font:800 17px Manrope,sans-serif;width:100%;padding:16px;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+.foot{text-align:center;color:var(--ink3);font-size:12px;margin-top:14px}
+.tag{display:inline-block;background:rgba(255,255,255,.12);border-radius:99px;padding:1px 8px;margin-left:4px}
+.ok{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#06220f;display:grid;place-items:center;font-size:34px;font-weight:800;margin:0 auto 6px}
+.err{color:var(--bad);text-align:center}
+</style></head><body><main>
+<div class="brand">truck<i>le</i></div>
+<div id="app" class="card"><div class="sub">Loading your invoice…</div></div>
+<div class="foot">🔒 Payments are processed by Stripe. Truckle never sees your card or bank login.</div>
+</main>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search),w=q.get('w'),i=q.get('i'),app=document.getElementById('app');
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var money=function(n){return '$'+(+n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})};
+  var fd=function(s){if(!s)return '';var d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})};
+  var initials=function(s){return String(s||'T').split(/\s+/).filter(Boolean).slice(0,2).map(function(x){return x[0].toUpperCase()}).join('')};
+  var sub={card:'Visa, Mastercard, Amex',wallet:'One tap on your phone',payto:'Approve it in your banking app'};
+  function fail(m){app.innerHTML='<div class="err">'+esc(m)+'</div>'}
+  async function load(tries){
+    var r=await fetch('/api/pay/invoice?w='+encodeURIComponent(w||'')+'&i='+encodeURIComponent(i||''));
+    var x=await r.json().catch(function(){return {}});
+    if(!r.ok)return fail(x.error||'We could not load this invoice.');
+    // Just back from Stripe: the webhook may take a second to mark it paid.
+    if(q.has('done')&&x.status!=='paid'&&!x.processing&&tries<8)return setTimeout(function(){load(tries+1)},1200);
+    render(x);
+  }
+  function render(x){
+    var head='<div class="co"><span class="mk">'+esc(initials(x.company.name))+'</span><b>'+esc(x.company.name)+'</b></div>';
+    if(x.status==='paid'){app.innerHTML='<div class="ok">✓</div><div class="amt">'+money(x.total)+'</div><div class="sub">Paid '+esc(fd(x.paidAt))+(x.paidBy?' by '+esc(x.paidBy):'')+'. Thank you!</div><div class="sub">Receipt '+esc(x.number)+' · '+esc(x.company.name)+(x.gstIncl?' · includes GST '+money(x.gst):'')+'</div>';return}
+    if(x.processing){app.innerHTML=head+'<div class="amt">'+money(x.total)+'</div><div class="sub">Your bank payment has started. It usually clears in 1 to 3 business days. We\'ll let '+esc(x.company.name)+' know.</div>';return}
+    var lines=x.lines.map(function(l){return '<div><span>'+esc(l.desc)+'</span><b>'+money(l.amount)+'</b></div>'}).join('');
+    var meth=x.methods.map(function(m,k){return '<label><input type="radio" name="m" value="'+m.id+'"'+(k===0?' checked':'')+'><div><b>'+esc(m.label)+'</b><div class="sub" style="text-align:left;margin:0">'+esc(sub[m.id]||'')+'</div></div></label>'}).join('');
+    app.innerHTML=head+'<div class="sub">Invoice '+esc(x.number)+' · for '+esc(x.customer)+'</div><div class="amt">'+money(x.total)+'</div>'
+      +'<div class="sub">Due '+esc(fd(x.dueAt))+(x.gstIncl?' · includes GST '+money(x.gst):'')+'</div>'
+      +'<div class="lines">'+lines+'</div>'+(x.notes?'<div class="note">'+esc(x.notes)+'</div>':'')
+      +(x.canPay?'<div class="meth">'+meth+'</div><button id="pay">Pay '+money(x.total)+'</button>'
+        :'<div class="note" style="margin-top:16px">'+esc(x.company.name)+' can\'t take online payments yet. Please pay them directly'+(x.company.phone?' (call '+esc(x.company.phone)+')':'')+'.</div>');
+    var b=document.getElementById('pay');if(!b)return;
+    b.onclick=async function(){
+      b.disabled=true;b.textContent='Opening secure checkout…';
+      var m=(app.querySelector('input[name=m]:checked')||{}).value||'card';
+      try{
+        var r=await fetch('/api/pay/checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({workspaceId:w,kind:'cinvoice',id:i,method:m,returnTo:'page'})});
+        var o=await r.json().catch(function(){return {}});
+        if(!r.ok)throw new Error(o.error||'Could not start the payment.');
+        location.href=o.url;
+      }catch(e){b.disabled=false;b.textContent='Pay '+money(x.total);alert(e.message)}
+    };
+  }
+  if(!w||!i)fail('This pay link is incomplete. Ask the company to send it again.');else load(0).catch(function(){fail('Could not connect. Check your internet and reload.')});
+})();
+</script></body></html>
